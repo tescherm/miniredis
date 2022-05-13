@@ -114,6 +114,7 @@ Implemented commands:
    - LINSERT
    - LLEN
    - LPOP
+   - LPOS
    - LPUSH
    - LPUSHX
    - LRANGE

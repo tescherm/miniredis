@@ -26,6 +26,7 @@ func commandsList(m *Miniredis) {
 	m.srv.Register("LINSERT", m.cmdLinsert)
 	m.srv.Register("LLEN", m.cmdLlen)
 	m.srv.Register("LPOP", m.cmdLpop)
+	m.srv.Register("LPOS", m.cmdLpos)
 	m.srv.Register("LPUSH", m.cmdLpush)
 	m.srv.Register("LPUSHX", m.cmdLpushx)
 	m.srv.Register("LRANGE", m.cmdLrange)
@@ -269,6 +270,49 @@ func (m *Miniredis) cmdLlen(c *server.Peer, cmd string, args []string) {
 // LPOP
 func (m *Miniredis) cmdLpop(c *server.Peer, cmd string, args []string) {
 	m.cmdXpop(c, cmd, args, left)
+}
+
+// LPOS
+func (m *Miniredis) cmdLpos(c *server.Peer, cmd string, args []string) {
+	if len(args) != 2 {
+		setDirty(c)
+		c.WriteError(errWrongNumber(cmd))
+		return
+	}
+	if !m.handleAuth(c) {
+		return
+	}
+	if m.checkPubsub(c, cmd) {
+		return
+	}
+
+	key, elem := args[0], args[1]
+
+	withTx(m, c, func(c *server.Peer, ctx *connCtx) {
+		db := m.db(ctx.selectedDB)
+
+		t, ok := db.keys[key]
+		if !ok {
+			// No such key
+			c.WriteNull()
+			return
+		}
+		if t != "list" {
+			c.WriteError(msgWrongType)
+			return
+		}
+
+		l := db.listKeys[key]
+
+		for pos, el := range l {
+			if el == elem {
+				c.WriteInt(pos)
+				return
+			}
+		}
+
+		c.WriteNull()
+	})
 }
 
 // RPOP

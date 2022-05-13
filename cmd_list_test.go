@@ -443,6 +443,22 @@ func TestLindex(t *testing.T) {
 	})
 }
 
+func TestLpos(t *testing.T) {
+	s, err := Run()
+	ok(t, err)
+	defer s.Close()
+	c, err := proto.Dial(s.Addr())
+	ok(t, err)
+	defer c.Close()
+
+	s.RPush("mylist", "a", "b", "c", "1", "2", "3", "c", "c")
+
+	mustDo(t, c,
+		"LPOS", "mylist", "c",
+		proto.Int(2),
+	)
+}
+
 func TestLlen(t *testing.T) {
 	s, err := Run()
 	ok(t, err)

@@ -1,3 +1,7 @@
+
+# IDE dirs
+.idea
+
 /integration/redis_src/
 /integration/dump.rdb
 *.swp
